@@ -63,53 +63,78 @@ function App() {
     // Scroll-Based Animation
     function moveModel() {
       const scrollPosition = document.documentElement.scrollTop;
-    
+
       // Selecteer wrappers
       const wrapper1 = document.querySelector('.wrapper1');
       const wrapper2 = document.querySelector('.wrapper2');
       const wrapper3 = document.querySelector('.wrapper3');
-    
+      const wrapper4 = document.querySelector('.wrapper4');
+
       const wrapper1Bottom = wrapper1.offsetTop + wrapper1.offsetHeight;
       const wrapper2Top = wrapper2.offsetTop;
+
       const wrapper2Bottom = wrapper2.offsetTop + wrapper2.offsetHeight;
       const wrapper3Top = wrapper3.offsetTop;
-    
+
+      const wrapper4Top = wrapper4.offsetTop;
+      const wrapper4Bottom = wrapper4.offsetTop + wrapper4.offsetHeight;
+
       // Animatie tussen .wrapper1 en .wrapper2
       const animationStart = wrapper1Bottom;
       const animationEnd = wrapper2Top;
-    
+
       // Zoom-animatie voor .wrapper3
       const zoomStart = wrapper2Bottom;
       const zoomEnd = wrapper3Top;
-    
+
+      // Positie-aanpassing voor .wrapper4
+      const resetStart = wrapper4Top;
+      const resetEnd = wrapper4Bottom;
+
+      // Logica voor .wrapper4 (hoogste prioriteit)
+      if (scrollPosition >= resetStart && scrollPosition <= resetEnd) {
+        const resetProgress = (scrollPosition - resetStart) / (resetEnd - resetStart);
+        camera.position.x = 40;
+        camera.position.z = (50, 30, 0);
+
+        if (leftHalf && rightHalf) {
+          leftHalf.position.x = 50;
+          rightHalf.position.x = 50;
+        }
+      }
+
+      // Logica voor .wrapper3
+      if (scrollPosition >= zoomStart && scrollPosition <= zoomEnd) {
+        const zoomProgress = (scrollPosition - zoomStart) / (zoomEnd - zoomStart);
+        camera.position.z = 90 - zoomProgress * 70;
+      }
+
+      // Logica tussen .wrapper1 en .wrapper2
       if (scrollPosition >= animationStart && scrollPosition <= animationEnd) {
-        // Animatie tussen .wrapper1 en .wrapper2
         const progress = (scrollPosition - animationStart) / (animationEnd - animationStart);
-    
         targetXLeft = 50 + progress * -100;
         targetXRight = 50 + progress * -100;
-    
         movementCompleted = false;
-      } else if (scrollPosition >= zoomStart && scrollPosition <= zoomEnd) {
-        // Zoom-animatie voor .wrapper3
-        const zoomProgress = (scrollPosition - zoomStart) / (zoomEnd - zoomStart);
-    
-        // Camera zoom-in
-        camera.position.z = THREE.MathUtils.lerp(90, 20, zoomProgress);
-      } else if (scrollPosition > zoomEnd && !movementCompleted) {
+      }
+
+      // Split logica na .wrapper2
+      if (scrollPosition > animationEnd && scrollPosition < zoomStart && !movementCompleted) {
         targetXLeft = -50;
         targetXRight = -50;
-        camera.position.z = 45;
-        movementCompleted = true;
         splitModel();
-      } else if (scrollPosition < animationStart) {
+        movementCompleted = true;
+      }
+
+      // Reset logica (boven .wrapper1)
+      if (scrollPosition < animationStart) {
         movementCompleted = false;
         isSplitTriggered = false;
         targetXLeft = 50;
         targetXRight = 50;
+        camera.position.x = 0;
         camera.position.z = 90; 
       }
-    }
+  }
 
     window.addEventListener('scroll', moveModel);
 
