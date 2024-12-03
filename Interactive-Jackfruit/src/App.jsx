@@ -63,23 +63,43 @@ function App() {
     // Scroll-Based Animation
     function moveModel() {
       const scrollPosition = document.documentElement.scrollTop;
-
+    
+      // Selecteer wrappers
       const wrapper1 = document.querySelector('.wrapper1');
       const wrapper2 = document.querySelector('.wrapper2');
+      const wrapper3 = document.querySelector('.wrapper3');
+    
       const wrapper1Bottom = wrapper1.offsetTop + wrapper1.offsetHeight;
       const wrapper2Top = wrapper2.offsetTop;
-
+      const wrapper2Bottom = wrapper2.offsetTop + wrapper2.offsetHeight;
+      const wrapper3Top = wrapper3.offsetTop;
+    
+      // Animatie tussen .wrapper1 en .wrapper2
       const animationStart = wrapper1Bottom;
       const animationEnd = wrapper2Top;
-
+    
+      // Zoom-animatie voor .wrapper3
+      const zoomStart = wrapper2Bottom;
+      const zoomEnd = wrapper3Top;
+    
       if (scrollPosition >= animationStart && scrollPosition <= animationEnd) {
+        // Animatie tussen .wrapper1 en .wrapper2
         const progress = (scrollPosition - animationStart) / (animationEnd - animationStart);
+    
         targetXLeft = 50 + progress * -100;
-        targetXRight = 50 + progress * -100; 
+        targetXRight = 50 + progress * -100;
+    
         movementCompleted = false;
-      } else if (scrollPosition > animationEnd && !movementCompleted) {
-        targetXLeft = -50; 
-        targetXRight = -50; 
+      } else if (scrollPosition >= zoomStart && scrollPosition <= zoomEnd) {
+        // Zoom-animatie voor .wrapper3
+        const zoomProgress = (scrollPosition - zoomStart) / (zoomEnd - zoomStart);
+    
+        // Camera zoom-in
+        camera.position.z = THREE.MathUtils.lerp(90, 20, zoomProgress);
+      } else if (scrollPosition > zoomEnd && !movementCompleted) {
+        targetXLeft = -50;
+        targetXRight = -50;
+        camera.position.z = 45;
         movementCompleted = true;
         splitModel();
       } else if (scrollPosition < animationStart) {
@@ -87,6 +107,7 @@ function App() {
         isSplitTriggered = false;
         targetXLeft = 50;
         targetXRight = 50;
+        camera.position.z = 90; 
       }
     }
 
@@ -111,7 +132,7 @@ function App() {
           if (!leftHalf || leftHalf.position.x > -1000) {
             requestAnimationFrame(animateSplit);
           } else {
-            console.log("Left half moved off-screen");
+            console.log();
           }
         }
     
