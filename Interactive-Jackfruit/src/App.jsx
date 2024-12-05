@@ -2,28 +2,22 @@ import './App.css';
 import * as THREE from 'three';
 import { useEffect } from 'react';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 function App() {
   useEffect(() => {
-    // Scene setup
+    // Three.js setup
     const scene = new THREE.Scene();
-
-    // Camera setup
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 90);
-    camera.lookAt(0, 0, 0);
 
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
-      canvas: document.querySelector('#bg'),
-    });
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#bg') });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
 
-    // Lighting
+    // Lights
     const pointLight = new THREE.PointLight(0xffffff, 1);
     pointLight.position.set(0, 50, 50);
     scene.add(pointLight);
@@ -37,97 +31,34 @@ function App() {
 
     const controls = new OrbitControls(camera, renderer.domElement);
 
-    // Animation states
-    let leftHalf = null;
-    let rightHalf = null;
-    let targetXLeft = 50; 
-    let targetXRight = 50; 
-    let isSplitTriggered = false;
-    let movementCompleted = false;
+    // FBX Loader and Animation
+    const loader = new FBXLoader();
+    let mixer = null;
 
-    // Load the left half model
-    const loader = new GLTFLoader();
-    loader.load('/models/apple_3d_left.gltf', (gltf) => {
-      leftHalf = gltf.scene;
-      leftHalf.position.set(50, -30, 0);
-      scene.add(leftHalf);
+    loader.load('/models/Placeholder_animation.fbx', (fbx) => {
+      console.log('Model loaded:', fbx);
+      scene.add(fbx);
+
+      // Position and scale of the model
+      fbx.position.set(0, 0, 0);
+      fbx.scale.set(1, 1, 1);
+
+      // Check and setup animations
+      if (fbx.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(fbx);
+        const action = mixer.clipAction(fbx.animations[0]); // Play the first animation
+        action.play();
+      }
     });
 
-    // Load the right half model
-    loader.load('/models/apple_3d_right.gltf', (gltf) => {
-      rightHalf = gltf.scene;
-      rightHalf.position.set(50, -30, 0);
-      scene.add(rightHalf);
-    });
-
-    // Scroll-Based Animation
-    function moveModel() {
-      const scrollPosition = document.documentElement.scrollTop;
-
-      const wrapper1 = document.querySelector('.wrapper1');
-      const wrapper2 = document.querySelector('.wrapper2');
-      const wrapper1Bottom = wrapper1.offsetTop + wrapper1.offsetHeight;
-      const wrapper2Top = wrapper2.offsetTop;
-
-      const animationStart = wrapper1Bottom;
-      const animationEnd = wrapper2Top;
-
-      if (scrollPosition >= animationStart && scrollPosition <= animationEnd) {
-        const progress = (scrollPosition - animationStart) / (animationEnd - animationStart);
-        targetXLeft = 50 + progress * -100;
-        targetXRight = 50 + progress * -100; 
-        movementCompleted = false;
-      } else if (scrollPosition > animationEnd && !movementCompleted) {
-        targetXLeft = -50; 
-        targetXRight = -50; 
-        movementCompleted = true;
-        splitModel();
-      } else if (scrollPosition < animationStart) {
-        movementCompleted = false;
-        isSplitTriggered = false;
-        targetXLeft = 50;
-        targetXRight = 50;
-      }
-    }
-
-    window.addEventListener('scroll', moveModel);
-
-    // Function to split the model
-    function splitModel() {
-      if (!isSplitTriggered) {
-        isSplitTriggered = true;
-    
-        const splitSpeed = 5; 
-    
-        function animateSplit() {
-          if (leftHalf) {
-            leftHalf.position.x -= splitSpeed;
-          }
-    
-          if (rightHalf) {
-            rightHalf.position.x = -50;
-          }
-    
-          if (!leftHalf || leftHalf.position.x > -1000) {
-            requestAnimationFrame(animateSplit);
-          } else {
-            console.log("Left half moved off-screen");
-          }
-        }
-    
-        animateSplit();
-      }
-    }
-
-    // Animation Loop
+    // Animate function
     function animate() {
       requestAnimationFrame(animate);
 
-      if (leftHalf && rightHalf) {
-        leftHalf.position.x = THREE.MathUtils.lerp(leftHalf.position.x, targetXLeft, 0.1);
-        rightHalf.position.x = THREE.MathUtils.lerp(rightHalf.position.x, targetXRight, 0.1);
-      }
+      // Update animation mixer
+      if (mixer) mixer.update(0.01); // Animation speed
 
+      // Render scene
       controls.update();
       renderer.render(scene, camera);
     }
@@ -135,7 +66,8 @@ function App() {
     animate();
 
     return () => {
-      window.removeEventListener('scroll', moveModel);
+      renderer.dispose();
+      controls.dispose();
     };
   }, []);
 
