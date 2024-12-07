@@ -6,7 +6,6 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 function App() {
   useEffect(() => {
-    // Three.js setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 90);
@@ -31,34 +30,197 @@ function App() {
 
     const controls = new OrbitControls(camera, renderer.domElement);
 
-    // FBX Loader and Animation
     const loader = new FBXLoader();
-    let mixer = null;
 
-    loader.load('/models/Placeholder_animation.fbx', (fbx) => {
-      console.log('Model loaded:', fbx);
+    let firstModel = null;
+    let firstMixer = null;
+    let secondModel = null;
+    let secondMixer = null;
+    let thirdModel = null;
+    let thirdMixer = null;
+    let fourthModel = null;
+    let fourthMixer = null;
+    let fifthModel = null;
+    let fifthMixer = null;
+
+    // Load the first animation (looping)
+    loader.load('/models/Apple_Whole_anim1.fbx', (fbx) => {
+      firstModel = fbx;
       scene.add(fbx);
-
-      // Position and scale of the model
       fbx.position.set(0, 0, 0);
-      fbx.scale.set(1, 1, 1);
 
-      // Check and setup animations
       if (fbx.animations.length > 0) {
-        mixer = new THREE.AnimationMixer(fbx);
-        const action = mixer.clipAction(fbx.animations[0]); // Play the first animation
-        action.play();
+        firstMixer = new THREE.AnimationMixer(fbx);
+        const firstAction = firstMixer.clipAction(fbx.animations[0]);
+        firstAction.loop = THREE.LoopRepeat;
+        firstAction.play();
       }
     });
+
+    // Load the second animation (triggered by scroll)
+    function loadSecondAnimation() {
+      loader.load('/models/Apple_Whole_anim2.fbx', (fbx) => {
+        secondModel = fbx;
+        scene.add(fbx);
+        fbx.position.set(0, 0, 0);
+
+        if (fbx.animations.length > 0) {
+          secondMixer = new THREE.AnimationMixer(fbx);
+          const secondAction = secondMixer.clipAction(fbx.animations[0]);
+          secondAction.loop = THREE.LoopOnce;
+          secondAction.clampWhenFinished = true;
+          secondAction.play();
+        }
+
+        if (firstModel) {
+          scene.remove(firstModel);
+          firstModel = null;
+        }
+        if (firstMixer) {
+          firstMixer.stopAllAction();
+          firstMixer = null;
+        }
+      });
+    }
+
+    // Load the third animation (triggered by scroll)
+    function loadThirdAnimation() {
+      loader.load('/models/Apple_Half_anim3.fbx', (fbx) => {
+        thirdModel = fbx;
+        scene.add(fbx);
+        fbx.position.set(0, 0, 0);
+
+        if (fbx.animations.length > 0) {
+          thirdMixer = new THREE.AnimationMixer(fbx);
+          const thirdAction = thirdMixer.clipAction(fbx.animations[0]);
+          thirdAction.loop = THREE.LoopOnce;
+          thirdAction.clampWhenFinished = true;
+          thirdAction.play();
+        }
+
+        if (secondModel) {
+          scene.remove(secondModel);
+          secondModel = null;
+        }
+        if (secondMixer) {
+          secondMixer.stopAllAction();
+          secondMixer = null;
+        }
+      });
+    }
+
+    // Load the fourth animation (triggered by scroll)
+    function loadFourthAnimation() {
+      loader.load('/models/Apple_Half_anim4.fbx', (fbx) => {
+        fourthModel = fbx;
+        scene.add(fbx);
+        fbx.position.set(0, 0, 0);
+
+        if (fbx.animations.length > 0) {
+          fourthMixer = new THREE.AnimationMixer(fbx);
+          const fourthAction = fourthMixer.clipAction(fbx.animations[0]);
+          fourthAction.loop = THREE.LoopOnce;
+          fourthAction.clampWhenFinished = true;
+          fourthAction.play();
+        }
+
+        // Remove the third model
+        if (thirdModel) {
+          scene.remove(thirdModel);
+          thirdModel = null;
+        }
+        if (thirdMixer) {
+          thirdMixer.stopAllAction();
+          thirdMixer = null;
+        }
+      });
+    }
+
+    // Load the fifth animation (triggered by scroll)
+    function loadFifthAnimation() {
+      loader.load('/models/Apple_Half_anim5.fbx', (fbx) => {
+        fifthModel = fbx;
+        scene.add(fbx);
+        fbx.position.set(0, 0, 0);
+
+        if (fbx.animations.length > 0) {
+          fifthMixer = new THREE.AnimationMixer(fbx);
+          const fifthAction = fifthMixer.clipAction(fbx.animations[0]);
+          fifthAction.loop = THREE.LoopOnce;
+          fifthAction.clampWhenFinished = true;
+          fifthAction.play();
+        }
+
+        // Remove the third model
+        if (fourthModel) {
+          scene.remove(fourthModel);
+          fourthModel = null;
+        }
+        if (fourthMixer) {
+          fourthMixer.stopAllAction();
+          fourthMixer = null;
+        }
+      });
+    }
+
+    let secondAnimationTriggered = false;
+    let thirdAnimationTriggered = false; 
+    let fourthAnimationTriggered = false;
+    let fifthAnimationTriggered = false; 
+
+
+    // Scroll-based triggers
+    function handleScroll() {
+      const scrollPosition = document.documentElement.scrollTop;
+      const secondAnimationThreshold = 400; // Threshold for second animation
+      const thirdAnimationThreshold = 980; // Threshold for third animation
+      const fourthAnimationThreshold = 1400; // Threshold for fourth animation
+      const fifthAnimationThreshold = 2800; // Threshold for fifth animation
+    
+      // Log the current scroll position
+      console.log(`Current Scroll Position: ${scrollPosition}`);
+    
+      // Trigger second animation
+      if (scrollPosition >= secondAnimationThreshold && !secondAnimationTriggered) {
+        console.log(`Triggering second animation at ${secondAnimationThreshold}`);
+        loadSecondAnimation();
+        secondAnimationTriggered = true;
+      }
+    
+      // Trigger third animation
+      if (scrollPosition >= thirdAnimationThreshold && !thirdAnimationTriggered) {
+        console.log(`Triggering third animation at ${thirdAnimationThreshold}`);
+        loadThirdAnimation();
+        thirdAnimationTriggered = true; 
+      }
+
+      // Trigger fourth animation
+      if (scrollPosition >= fourthAnimationThreshold && !fourthAnimationTriggered) {
+        console.log(`Triggering fourth animation at ${fourthAnimationThreshold}`);
+        loadFourthAnimation();
+        fourthAnimationTriggered = true;
+      }
+
+      // Trigger fifth animation
+      if (scrollPosition >= fifthAnimationThreshold && !fifthAnimationTriggered) {
+        console.log(`Triggering fourth animation at ${fifthAnimationThreshold}`);
+        loadFifthAnimation();
+        fifthAnimationTriggered = true;
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll);
 
     // Animate function
     function animate() {
       requestAnimationFrame(animate);
 
-      // Update animation mixer
-      if (mixer) mixer.update(0.01); // Animation speed
+      if (firstMixer) firstMixer.update(0.01); // Update first animation
+      if (secondMixer) secondMixer.update(0.01); // Update second animation
+      if (thirdMixer) thirdMixer.update(0.01); // Update third animation
+      if (fourthMixer) fourthMixer.update(0.01); // Update fourth animation
+      if (fifthMixer) fifthMixer.update(0.01); // Update fifth animation
 
-      // Render scene
       controls.update();
       renderer.render(scene, camera);
     }
@@ -68,6 +230,7 @@ function App() {
     return () => {
       renderer.dispose();
       controls.dispose();
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
